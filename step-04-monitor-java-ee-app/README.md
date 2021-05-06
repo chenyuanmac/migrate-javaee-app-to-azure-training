@@ -154,7 +154,7 @@ Configure the Java EE application to start the Application Insights Java in-proc
 az webapp config appsettings set \
     --resource-group ${RESOURCE_GROUP} --name ${WEBAPP} \
     --settings \
-    JAVA_OPTS="-javaagent:/home/site/wwwroot/applicationinsights-agent-3.0.0.jar" \
+    JAVA_OPTS="-javaagent:/home/site/libs/applicationinsights-agent-3.0.0.jar" \
     APPLICATIONINSIGHTS_CONNECTION_STRING=${APPLICATIONINSIGHTS_CONNECTION_STRING} \
     APPLICATIONINSIGHTS_ROLE_NAME=${WEBAPP}
 

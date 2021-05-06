@@ -25,7 +25,7 @@ Install a JBoss EAP module:
 # where resources point to JDBC driver for SQL Database
 # and module xml points to module description, see below
 
-module add --name=com.microsoft --resources=/home/site/wwwroot/mssql-jdbc-7.2.1.jre8.jar --module-xml=/home/site/wwwroot/mssql-module.xml
+module add --name=com.microsoft --resources=/home/site/libs/mssql-jdbc-7.2.1.jre8.jar --module-xml=/home/site/wwwroot/mssql-module.xml
 ```
 Where `mssql-module.xml` describes the module:
 
@@ -33,7 +33,7 @@ Where `mssql-module.xml` describes the module:
 <?xml version="1.0" ?>
 <module xmlns="urn:jboss:module:1.1" name="com.microsoft">
   <resources>
-	<resource-root path="/home/site/wwwroot/mssql-jdbc-7.2.1.jre8.jar"/>
+	<resource-root path="/home/site/libs/mssql-jdbc-7.2.1.jre8.jar"/>
   </resources>
   <dependencies>
     <module name="javax.api"/>
@@ -65,67 +65,46 @@ These JBoss CLI commands, JDBC driver for SQL Database and module XML are availa
 
 Also, you can directly download [JDBC driver for SQL Database](https://docs.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server). For example:
 
+### Step 2: Deploy multiple artifacts to App Service linux
 
-### Step 2: Upload data source artifacts to App Service linux
+Open `pom.xml` and update the `deployment` with the following configuration and run `mvn azure-webapp:deploy` to deploy.
 
-Open an FTP connection to App Service Linux to upload data source artifacts:
-
-```bash
-cd .scripts/3C-sql
-
-ftp
-ftp> open waws-prod-bay-063.ftp.azurewebsites.windows.net
-Trying 23.99.87.125...
-Connected to waws-prod-bay-063.drip.azurewebsites.windows.net.
-220 Microsoft FTP Service
-Name (waws-prod-bay-063.ftp.azurewebsites.windows.net:selvasingh):
-331 Password required
-Password:
-230 User logged in.
-Remote system type is Windows_NT.
-ftp> pwd
-Remote directory: /
-ftp> ascii
-200 Type set to A.
-ftp> put startup.sh
-local: startup.sh remote: startup.sh
-229 Entering Extended Passive Mode (|||10199|)
-125 Data connection already open; Transfer starting.
-100% |*******************************************************|   125       21.36 KiB/s    --:-- ETA
-226 Transfer complete.
-125 bytes sent in 00:00 (2.71 KiB/s)
-ftp> cd site/deployments/tools
-250 CWD command successful.
-ftp> put mssql-datasource-commands.cli
-local: mssql-datasource-commands.cli remote: mssql-datasource-commands.cli
-229 Entering Extended Passive Mode (|||10200|)
-125 Data connection already open; Transfer starting.
-100% |*******************************************************|  1751      301.42 KiB/s    --:-- ETA
-226 Transfer complete.
-1751 bytes sent in 00:00 (35.69 KiB/s)
-ftp> put mssql-module.xml
-local: mssql-module.xml remote: mssql-module.xml
-229 Entering Extended Passive Mode (|||10201|)
-125 Data connection already open; Transfer starting.
-100% |*******************************************************|   305       51.39 KiB/s    --:-- ETA
-226 Transfer complete.
-305 bytes sent in 00:00 (7.07 KiB/s)
-ftp> bin
-200 Type set to I.
-ftp> put mssql-jdbc-7.2.1.jre8.jar
-local: mssql-jdbc-7.2.1.jre8.jar remote: mssql-jdbc-7.2.1.jre8.jar
-229 Entering Extended Passive Mode (|||10202|)
-125 Data connection already open; Transfer starting.
-100% |*******************************************************|  1135 KiB    1.62 MiB/s    00:00 ETA
-226 Transfer complete.
-1162710 bytes sent in 00:00 (1.48 MiB/s)
-ftp> bye
-221 Goodbye.
+```xml
+<deployment>
+  <resources>
+    <resource>
+      <type>war</type>
+      <directory>${project.basedir}/target</directory>
+      <includes>
+        <include>*.war</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>lib</type>
+      <directory>${project.basedir}/.scripts/3C-sql</directory>
+      <includes>
+        <include>*.jar</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>startup</type>
+      <directory>${project.basedir}/.scripts/3C-sql</directory>
+      <includes>
+        <include>*.sh</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>static</type>
+      <directory>${project.basedir}/.scripts/3C-sql</directory>
+      <includes>
+        <include>*.cli</include>
+        <include>*.xml</include>
+      </includes>
+    </resource>
+  </resources>
+</deployment>
 ```
->🚧 - __Preview-specific__. Using FTP file transfer to upload drivers, modules, CLI commands and
-startup batch file is only necessary while JBoss EAP on App Service is in preview. Soon, the
-[Maven Plugin for Azure App Service](https://github.com/Microsoft/azure-maven-plugins/blob/develop/azure-webapp-maven-plugin/README.md)
-will integrate these file transfer into the popular one-step deploy, `mvn azure-webapp:deploy`.
+
 
 ### Step 3: Set SQL Database connection info in the Web app environment
 

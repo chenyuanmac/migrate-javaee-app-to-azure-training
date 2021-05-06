@@ -25,7 +25,7 @@ Install a JBoss EAP module:
 # where resources point to JDBC driver for MySQL
 # and module xml points to module description, see below
 
-module add --name=com.mysql --resources=/home/site/wwwroot/mysql-connector-java-8.0.13.jar --module-xml=/home/site/wwwroot/mysql-module.xml
+module add --name=com.mysql --resources=/home/site/libs/mysql-connector-java-8.0.13.jar --module-xml=/home/site/wwwroot/mysql-module.xml
 ```
 Where `mysql-module.xml` describes the module:
 
@@ -34,7 +34,7 @@ Where `mysql-module.xml` describes the module:
 <module xmlns="urn:jboss:module:1.1" name="com.mysql">
     <resources>
      <!-- ***** IMPORTANT : REPLACE THIS PLACEHOLDER *******-->
-       <resource-root path="/home/site/wwwroot/mysql-connector-java-8.0.13.jar" />
+       <resource-root path="/home/site/libs/mysql-connector-java-8.0.13.jar" />
     </resources>
     <dependencies>
         <module name="javax.api"/>
@@ -70,64 +70,45 @@ Also, you can directly download [JDBC driver for MySQL](https://dev.mysql.com/do
 wget -q "http://search.maven.org/remotecontent?filepath=mysql/mysql-connector-java/8.0.13/mysql-connector-java-8.0.13.jar" -O mysql-connector-java-8.0.13.jar
 ```
 
-### Step 2: Upload data source artifacts to App Service linux
+### Step 2: Deploy multiple artifacts to App Service linux
 
-Open an FTP connection to App Service Linux to upload data source artifacts:
+Open `pom.xml` and update the `deployment` with the following configuration and run `mvn azure-webapp:deploy` to deploy.
 
-```bash
-cd .scripts/3B-mysql
-
-ftp
-ftp> open waws-prod-bay-063.drip.azurewebsites.windows.net
-Trying 23.99.84.148...
-Connected to waws-prod-bay-063.drip.azurewebsites.windows.net.
-220 Microsoft FTP Service
-Name (waws-prod-bay-063.drip.azurewebsites.windows.net:selvasingh): petstore-java-ee\\$petstore-java-ee
-331 Password required
-Password:
-230 User logged in.
-Remote system type is Windows_NT.
-ftp> ascii
-200 Type set to A.
-ftp> put startup.sh
-local: startup.sh remote: startup.sh
-229 Entering Extended Passive Mode (|||10208|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|   236       40.58 KiB/s    --:-- ETA
-226 Transfer complete.
-236 bytes sent in 00:00 (5.18 KiB/s)
-ftp> cd site/deployments/tools
-250 CWD command successful.
-ftp> put mysql-datasource-commands.cli
-local: mysql-datasource-commands.cli remote: mysql-datasource-commands.cli
-229 Entering Extended Passive Mode (|||10209|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|  1375      226.39 KiB/s    --:-- ETA
-226 Transfer complete.
-1375 bytes sent in 00:00 (30.81 KiB/s)
-ftp> put mysql-module.xml
-local: mysql-module.xml remote: mysql-module.xml
-229 Entering Extended Passive Mode (|||10210|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|   411        1.29 MiB/s    --:-- ETA
-226 Transfer complete.
-411 bytes sent in 00:00 (9.34 KiB/s)
-ftp> binary
-200 Type set to I.
-ftp> put mysql-connector-java-8.0.13.jar
-local: mysql-connector-java-8.0.13.jar remote: mysql-connector-java-8.0.13.jar
-229 Entering Extended Passive Mode (|||10211|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|  2082 KiB  622.64 KiB/s    00:00 ETA
-226 Transfer complete.
-2132635 bytes sent in 00:03 (597.54 KiB/s)
-ftp> bye
-221 Goodbye.
+```xml
+<deployment>
+  <resources>
+    <resource>
+      <type>war</type>
+      <directory>${project.basedir}/target</directory>
+      <includes>
+        <include>*.war</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>lib</type>
+      <directory>${project.basedir}/.scripts/3B-mysql</directory>
+      <includes>
+        <include>*.jar</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>startup</type>
+      <directory>${project.basedir}/.scripts/3B-mysql</directory>
+      <includes>
+        <include>*.sh</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>static</type>
+      <directory>${project.basedir}/.scripts/3B-mysql</directory>
+      <includes>
+        <include>*.cli</include>
+        <include>*.xml</include>
+      </includes>
+    </resource>
+  </resources>
+</deployment>
 ```
->🚧 - __Preview-specific__. Using FTP file transfer to upload drivers, modules, CLI commands and
-startup batch file is only necessary while JBoss EAP on App Service is in preview. Soon, the
-[Maven Plugin for Azure App Service](https://github.com/Microsoft/azure-maven-plugins/blob/develop/azure-webapp-maven-plugin/README.md)
-will integrate these file transfer into the popular one-step deploy, `mvn azure-webapp:deploy`.
 
 ### Step 3: Set MySQL database connection info in the Web app environment
 

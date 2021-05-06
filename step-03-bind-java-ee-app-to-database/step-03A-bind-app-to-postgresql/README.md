@@ -25,7 +25,7 @@ Install a JBoss EAP module:
 # where resources point to JDBC driver for PostgreSQL
 # and module xml points to module description, see below
 
-module add --name=org.postgres --resources=/home/site/wwwroot/postgresql-42.2.5.jar --module-xml=/home/site/wwwroot/postgresql-module.xml
+module add --name=org.postgres --resources=/home/site/libs/postgresql-42.2.5.jar --module-xml=/home/site/wwwroot/postgresql-module.xml
 ```
 Where `postgresql-module.xml` describes the module:
 
@@ -34,7 +34,7 @@ Where `postgresql-module.xml` describes the module:
 <module xmlns="urn:jboss:module:1.1" name="org.postgres">
     <resources>
      <!-- ***** IMPORTANT : PATH should point to PostgreSQL Java driver on App Service Linux *******-->
-       <resource-root path="/home/site/wwwroot/postgresql-42.2.5.jar" />
+       <resource-root path="/home/site/libs/postgresql-42.2.5.jar" />
     </resources>
     <dependencies>
         <module name="javax.api"/>
@@ -66,71 +66,45 @@ These JBoss CLI commands, JDBC driver for PostgreSQL and module XML are availabl
 
 Also, you can directly download the latest version of [JDBC driver for PostgreSQL](https://jdbc.postgresql.org/download.html)
 
-### Step 2: Upload data source artifacts to App Service linux
+### Step 2: Deploy multiple artifacts to App Service linux
 
-Open an FTP connection to App Service Linux to upload data source artifacts:
+Open `pom.xml` and update the `deployment` with the following configuration and run `mvn azure-webapp:deploy` to deploy.
 
-```bash
-cd .scripts/3A-postgresql
-
-ftp
-ftp> open waws-prod-bay-063.drip.azurewebsites.windows.net
-Trying 23.99.84.148...
-Connected to waws-prod-bay-063.drip.azurewebsites.windows.net.
-220 Microsoft FTP Service
-Name (waws-prod-bay-063.drip.azurewebsites.windows.net:selvasingh):
-331 Password required
-Password:
-230 User logged in.
-Remote system type is Windows_NT.
-ftp> ascii
-200 Type set to A.
-
-ftp> passive
-
-# Upload startup.sh to /home directory
-ftp> put startup.sh
-local: startup.sh remote: startup.sh
-229 Entering Extended Passive Mode (|||10204|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|   236       39.33 KiB/s    --:-- ETA
-226 Transfer complete.
-236 bytes sent in 00:00 (5.01 KiB/s)
-
-# Upload CLI Commands, Module XML and JDBC Driver for PostgreSQL to /home/site/deployments/tools
-ftp> cd site/deployments/tools
-250 CWD command successful.
-ftp> put postgresql-datasource-commands.cli
-local: postgresql-datasource-commands.cli remote: postgresql-datasource-commands.cli
-229 Entering Extended Passive Mode (|||10205|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|  1444      234.94 KiB/s    --:-- ETA
-226 Transfer complete.
-1444 bytes sent in 00:00 (32.31 KiB/s)
-ftp> put postgresql-module.xml
-local: postgresql-module.xml remote: postgresql-module.xml
-229 Entering Extended Passive Mode (|||10206|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|   404      192.17 KiB/s    --:-- ETA
-226 Transfer complete.
-404 bytes sent in 00:00 (5.86 KiB/s)
-ftp> binary
-200 Type set to I.
-ftp> put postgresql-42.2.5.jar
-local: postgresql-42.2.5.jar remote: postgresql-42.2.5.jar
-229 Entering Extended Passive Mode (|||10207|)
-125 Data connection already open; Transfer starting.
-100% |************************************************|   806 KiB  506.52 KiB/s    00:00 ETA
-226 Transfer complete.
-825943 bytes sent in 00:01 (469.59 KiB/s)
-ftp> bye
-221 Goodbye.
+```xml
+<deployment>
+  <resources>
+    <resource>
+      <type>war</type>
+      <directory>${project.basedir}/target</directory>
+      <includes>
+        <include>*.war</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>lib</type>
+      <directory>${project.basedir}/.scripts/3A-postgresql</directory>
+      <includes>
+        <include>*.jar</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>startup</type>
+      <directory>${project.basedir}/.scripts/3A-postgresql</directory>
+      <includes>
+        <include>*.sh</include>
+      </includes>
+    </resource>
+    <resource>
+      <type>static</type>
+      <directory>${project.basedir}/.scripts/3A-postgresql</directory>
+      <includes>
+        <include>*.cli</include>
+        <include>*.xml</include>
+      </includes>
+    </resource>
+  </resources>
+</deployment>
 ```
-
->🚧 - __Preview-specific__. Using FTP file transfer to upload drivers, modules, CLI commands and
-startup batch file is only necessary while JBoss EAP on App Service is in preview. Soon, the
-[Maven Plugin for Azure App Service](https://github.com/Microsoft/azure-maven-plugins/blob/develop/azure-webapp-maven-plugin/README.md)
-will integrate these file transfer into the popular one-step deploy, `mvn azure-webapp:deploy`.
 
 ### Step 3: Set PostgreSQL database connection info in the Web app environment
 

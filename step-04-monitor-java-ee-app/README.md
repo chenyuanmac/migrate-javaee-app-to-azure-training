@@ -15,12 +15,12 @@ Create a Log Analytics Workspace using Azure CLI:
 az monitor log-analytics workspace create \
     --workspace-name ${LOG_ANALYTICS} \
     --resource-group ${RESOURCE_GROUP} \
-    --location ${REGION}                                       
+    --location ${REGION}
 
 export LOG_ANALYTICS_RESOURCE_ID=$(az monitor log-analytics workspace show \
     --resource-group ${RESOURCE_GROUP} \
     --workspace-name ${LOG_ANALYTICS} | jq -r '.id')
-    
+
 export WEBAPP_RESOURCE_ID=$(az webapp show --name ${WEBAPP} --resource-group ${RESOURCE_GROUP} | jq -r '.id')
 ```
 
@@ -85,7 +85,7 @@ az monitor diagnostic-settings create --name "send-logs-and-metrics-to-log-analy
                "enabled": false,
                "days": 0
              }
-           }         
+           }
        ]' \
        --metrics '[
          {
@@ -134,13 +134,13 @@ Connected to waws-prod-bay-139.drip.azurewebsites.windows.net.
 220 Microsoft FTP Service
 Name (waws-prod-bay-139.ftp.azurewebsites.windows.net:selvasingh): seattle-petstore\\$seattle-petstore
 331 Password required
-Password: 
+Password:
 230 User logged in.
 ftp> cd site/deployments/tools
 250 CWD command successful.
 ftp> bin
 200 Type set to I.
-ftp> put applicationinsights-agent-3.0.0.jar 
+ftp> put applicationinsights-agent-3.0.0.jar
 200 PORT command successful.
 125 Data connection already open; Transfer starting.
 226 Transfer complete.
@@ -154,10 +154,10 @@ Configure the Java EE application to start the Application Insights Java in-proc
 az webapp config appsettings set \
     --resource-group ${RESOURCE_GROUP} --name ${WEBAPP} \
     --settings \
-    JAVA_OPTS="-javaagent:/home/site/deployments/tools/applicationinsights-agent-3.0.0.jar" \
+    JAVA_OPTS="-javaagent:/home/site/wwwroot/applicationinsights-agent-3.0.0.jar" \
     APPLICATIONINSIGHTS_CONNECTION_STRING=${APPLICATIONINSIGHTS_CONNECTION_STRING} \
     APPLICATIONINSIGHTS_ROLE_NAME=${WEBAPP}
- 
+
 az webapp stop -g ${RESOURCE_GROUP} -n ${WEBAPP}
 az webapp start -g ${RESOURCE_GROUP} -n ${WEBAPP}
 ```
@@ -174,8 +174,8 @@ open https://${WEBAPP}.azurewebsites.net
 ```
 ![](../step-01-deploy-java-ee-app-to-azure/media/YAPS-PetStore-H2.jpg)
 
-You can also `curl` the REST API exposed by the Java EE application. The admin REST 
-API allows you to create/update/remove items in the catalog, orders or customers. 
+You can also `curl` the REST API exposed by the Java EE application. The admin REST
+API allows you to create/update/remove items in the catalog, orders or customers.
 You can run the following curl commands:
 ```bash
 curl -X GET https://${WEBAPP}.azurewebsites.net/rest/categories
@@ -197,11 +197,11 @@ curl -X GET https://${WEBAPP}.azurewebsites.net/swagger.json
 
 ## Monitor Java EE application
 
-Go to Log Analytics and navigate to the `Logs` blade. 
+Go to Log Analytics and navigate to the `Logs` blade.
 Type and run the following Kusto query to see application performance by operations:
 ```sql
-// Operations performance 
-// Calculate request count and duration by operations. 
+// Operations performance
+// Calculate request count and duration by operations.
 // To create an alert for this query, click '+ New alert rule'
 AppRequests
 | summarize RequestsCount=sum(ItemCount), AverageDuration=avg(DurationMs), percentiles(DurationMs, 50, 95, 99) by OperationName, _ResourceId // you can replace 'OperationName' with another value to segment by a different property
@@ -233,7 +233,7 @@ Click on `Live Metrics` blade to see metrics and insights with latencies less th
 ![](./media/seattle-petstore-live-metrics.jpg)
 
 ---
-  
+
 ⬅️ Previous guide:  [03 - Bind Java EE application to database](../step-03-bind-java-ee-app-to-database/README.md)
 
 ➡️ Next guide: [Step 05 - Set up GitHub Actions](../step-05-setup-github-actions/README.md)

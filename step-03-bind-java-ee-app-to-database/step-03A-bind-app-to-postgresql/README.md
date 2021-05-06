@@ -8,24 +8,24 @@ Bind the application to the petstore database in Azure Database for PostgreSQL.
 
 ## Configure PostgreSQL Data Source
 
-There are 4 steps to configure a data source. These steps are similar to configuring data sources 
+There are 4 steps to configure a data source. These steps are similar to configuring data sources
 in any on premise Java EE app servers:
 
 ### Step 1: Understand how to configure JBoss EAP
 
-In App Service, each instance of an app server is stateless. Therefore, each instance must be 
-configured on startup to support a JBoss EAP configuration needed by your application. You can configure at 
-startup by supplying a startup Bash script that calls [JBoss/WildFly CLI commands](https://docs.jboss.org/author/display/WFLY/Command+Line+Interface) to setup data sources, messaging 
- providers and any other dependencies. We will create a startup.sh script and place it in the `/home` 
+In App Service, each instance of an app server is stateless. Therefore, each instance must be
+configured on startup to support a JBoss EAP configuration needed by your application. You can configure at
+startup by supplying a startup Bash script that calls [JBoss/WildFly CLI commands](https://docs.jboss.org/author/display/WFLY/Command+Line+Interface) to setup data sources, messaging
+ providers and any other dependencies. We will create a startup.sh script and place it in the `/home`
  directory of the Web app. The script will:
- 
+
 Install a JBoss EAP module:
 
 ```text
 # where resources point to JDBC driver for PostgreSQL
 # and module xml points to module description, see below
 
-module add --name=org.postgres --resources=/home/site/deployments/tools/postgresql-42.2.5.jar --module-xml=/home/site/deployments/tools/postgresql-module.xml
+module add --name=org.postgres --resources=/home/site/wwwroot/postgresql-42.2.5.jar --module-xml=/home/site/wwwroot/postgresql-module.xml
 ```
 Where `postgresql-module.xml` describes the module:
 
@@ -34,7 +34,7 @@ Where `postgresql-module.xml` describes the module:
 <module xmlns="urn:jboss:module:1.1" name="org.postgres">
     <resources>
      <!-- ***** IMPORTANT : PATH should point to PostgreSQL Java driver on App Service Linux *******-->
-       <resource-root path="/home/site/deployments/tools/postgresql-42.2.5.jar" />
+       <resource-root path="/home/site/wwwroot/postgresql-42.2.5.jar" />
     </resources>
     <dependencies>
         <module name="javax.api"/>
@@ -42,7 +42,7 @@ Where `postgresql-module.xml` describes the module:
     </dependencies>
 </module>
 ```
- 
+
 Add a JDBC driver for PostgreSQL:
 
 ```text
@@ -61,8 +61,8 @@ A server reload may be required for the changes to take effect:
 reload --use-current-server-config=true
 ```
 
-These JBoss CLI commands, JDBC driver for PostgreSQL and module XML are available in 
-[initial-postgresql/agoncal-application-petstore-ee7/.scripts](https://github.com/Azure-Samples/migrate-Java-EE-app-to-azure/tree/master/initial-postgresql/agoncal-application-petstore-ee7/.scripts) 
+These JBoss CLI commands, JDBC driver for PostgreSQL and module XML are available in
+[initial-postgresql/agoncal-application-petstore-ee7/.scripts](https://github.com/Azure-Samples/migrate-Java-EE-app-to-azure/tree/master/initial-postgresql/agoncal-application-petstore-ee7/.scripts)
 
 Also, you can directly download the latest version of [JDBC driver for PostgreSQL](https://jdbc.postgresql.org/download.html)
 
@@ -78,9 +78,9 @@ ftp> open waws-prod-bay-063.drip.azurewebsites.windows.net
 Trying 23.99.84.148...
 Connected to waws-prod-bay-063.drip.azurewebsites.windows.net.
 220 Microsoft FTP Service
-Name (waws-prod-bay-063.drip.azurewebsites.windows.net:selvasingh): 
+Name (waws-prod-bay-063.drip.azurewebsites.windows.net:selvasingh):
 331 Password required
-Password: 
+Password:
 230 User logged in.
 Remote system type is Windows_NT.
 ftp> ascii
@@ -100,14 +100,14 @@ local: startup.sh remote: startup.sh
 # Upload CLI Commands, Module XML and JDBC Driver for PostgreSQL to /home/site/deployments/tools
 ftp> cd site/deployments/tools
 250 CWD command successful.
-ftp> put postgresql-datasource-commands.cli 
+ftp> put postgresql-datasource-commands.cli
 local: postgresql-datasource-commands.cli remote: postgresql-datasource-commands.cli
 229 Entering Extended Passive Mode (|||10205|)
 125 Data connection already open; Transfer starting.
 100% |************************************************|  1444      234.94 KiB/s    --:-- ETA
 226 Transfer complete.
 1444 bytes sent in 00:00 (32.31 KiB/s)
-ftp> put postgresql-module.xml 
+ftp> put postgresql-module.xml
 local: postgresql-module.xml remote: postgresql-module.xml
 229 Entering Extended Passive Mode (|||10206|)
 125 Data connection already open; Transfer starting.
@@ -116,7 +116,7 @@ local: postgresql-module.xml remote: postgresql-module.xml
 404 bytes sent in 00:00 (5.86 KiB/s)
 ftp> binary
 200 Type set to I.
-ftp> put postgresql-42.2.5.jar 
+ftp> put postgresql-42.2.5.jar
 local: postgresql-42.2.5.jar remote: postgresql-42.2.5.jar
 229 Entering Extended Passive Mode (|||10207|)
 125 Data connection already open; Transfer starting.
@@ -127,15 +127,15 @@ ftp> bye
 221 Goodbye.
 ```
 
->🚧 - __Preview-specific__. Using FTP file transfer to upload drivers, modules, CLI commands and 
-startup batch file is only necessary while JBoss EAP on App Service is in preview. Soon, the 
+>🚧 - __Preview-specific__. Using FTP file transfer to upload drivers, modules, CLI commands and
+startup batch file is only necessary while JBoss EAP on App Service is in preview. Soon, the
 [Maven Plugin for Azure App Service](https://github.com/Microsoft/azure-maven-plugins/blob/develop/azure-webapp-maven-plugin/README.md)
 will integrate these file transfer into the popular one-step deploy, `mvn azure-webapp:deploy`.
 
 ### Step 3: Set PostgreSQL database connection info in the Web app environment
 
 Use Azure CLI to set database connection info:
-   
+
 ```bash
 az webapp config appsettings set \
     --resource-group ${RESOURCE_GROUP} --name ${WEBAPP} \
@@ -166,28 +166,28 @@ az webapp config appsettings set \
    "slotSetting": false,
    "value": "postgres@petstore-db"
  }
-] 
+]
 ```
 ```bash
-az webapp config set --startup-file /home/startup.sh \
+az webapp config set --startup-file /site/scripts/startup.sh \
     --resource-group ${RESOURCE_GROUP} --name ${WEBAPP}
 ```
 
 >🚧 - __Preview-specific__. Using Azure CLI to set App Settings and startup batch file
- is only necessary while JBoss EAP on App Service is in preview. Soon, the 
+ is only necessary while JBoss EAP on App Service is in preview. Soon, the
 [Maven Plugin for Azure App Service](https://github.com/Microsoft/azure-maven-plugins/blob/develop/azure-webapp-maven-plugin/README.md)
 will integrate these operations into the popular one-step deploy, `mvn azure-webapp:deploy`.
 
 ### Step 4: Restart the remote JBoss EAP app server
 
 Use Azure CLI to restart the remote JBoss EAP app server:
-   
+
 ```bash
 az webapp stop -g ${RESOURCE_GROUP} -n ${WEBAPP}
 az webapp start -g ${RESOURCE_GROUP} -n ${WEBAPP}
 ```
 
-For additional info, please refer to: 
+For additional info, please refer to:
 
 - [JBoss Data Source Management](https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.0/html/configuration_guide/datasource_management).
 - [JBoss/WildFly CLI Guide](https://docs.jboss.org/author/display/WFLY/Command+Line+Interface)
@@ -204,7 +204,7 @@ mvn package -Dmaven.test.skip=true -Ddb=postgresql
 
 Note - the `postgresql` Maven profile is available [here](../../pom.xml#L399).
 
-## Deploy to App Service Linux 
+## Deploy to App Service Linux
 
 Deploy to JBoss EAP in App Service Linux:
 
@@ -227,7 +227,7 @@ psql --host=${POSTGRES_SERVER_FULL_NAME} --port=5432 \
     --username=${POSTGRES_SERVER_ADMIN_FULL_NAME} \
     --dbname=${POSTGRES_DATABASE_NAME} --set=sslmode=require
 
-Password for user postgres@petstore-db: 
+Password for user postgres@petstore-db:
 psql (11.1, server 9.6.10)
 SSL connection (protocol: TLSv1.2, cipher: ECDHE-RSA-AES256-SHA384, bits: 256, compression: off)
 Type "help" for help.
@@ -235,7 +235,7 @@ Type "help" for help.
 postgres=> \l
 postgres=> \dt
                List of relations
- Schema |        Name        | Type  |  Owner   
+ Schema |        Name        | Type  |  Owner
 --------+--------------------+-------+----------
  public | category           | table | postgres
  public | country            | table | postgres
@@ -248,7 +248,7 @@ postgres=> \dt
 (8 rows)
 
 postgres=> select name from category;
-   name   
+   name
 ----------
  Fish
  Dogs
@@ -269,7 +269,7 @@ az webapp log tail --name ${WEBAPP} --resource-group ${RESOURCE_GROUP}
 ```
 
 ---
-  
+
 ⬅️ Previous guide: [02 - Create a database](../../step-02-create-a-database/README.md)
-  
+
 ➡️ Next guide: [04 - Monitor Java EE application](../../step-04-monitor-java-ee-app/README.md)

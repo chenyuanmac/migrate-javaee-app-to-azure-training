@@ -143,7 +143,7 @@ az webapp config appsettings set \
 ]
 ```
 ```bash
-az webapp config set --startup-file /site/scripts/startup.sh \
+az webapp config set --startup-file /home/site/scripts/startup.sh \
     --resource-group ${RESOURCE_GROUP} --name ${WEBAPP}
 ```
 

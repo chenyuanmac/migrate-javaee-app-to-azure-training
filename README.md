@@ -91,7 +91,7 @@ This Java EE Petstore sample is forked from
 > Today, thanks to the Azure team, my Petstore application is built with GitHub actions and deployed to the cloud.
 > Without changing the original code, and with only a few commands and some configuration, you can deploy the application to Azure.
 > What a journey!
-> 
+> sdfadfa
 > Thank you,
 > 
 > [Antonio Goncalves](http://www.antoniogoncalves.org)

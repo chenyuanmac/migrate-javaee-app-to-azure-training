@@ -269,6 +269,7 @@
           <deployment>
             <resources>
               <resource>
+                <type>war</type>
                 <directory>${project.basedir}/target</directory>
                 <includes>
                   <include>*.war</include>
